@@ -1,17 +1,17 @@
 // Tabs
 const $ = (s) => document.querySelector(s);
 const tabValidate = $("#tab-validate");
-const tabUrl = $("#tab-url");
+
 const tabSpec = $("#tab-spec");
 const panelValidate = $("#panel-validate");
-const panelUrl = $("#panel-url");
+
 const panelSpec = $("#panel-spec");
 
 function showTab(which){
-  [panelValidate, panelUrl, panelSpec].forEach(p=>p.classList.add("hidden"));
-  [tabValidate, tabUrl, tabSpec].forEach(t=>t.classList.remove("active"));
+  [panelValidate, panelSpec].forEach(p=>p.classList.add("hidden"));
+  [tabValidate, tabSpec].forEach(t=>t.classList.remove("active"));
   if(which==="validate"){ panelValidate.classList.remove("hidden"); tabValidate.classList.add("active"); }
-  if(which==="url"){ panelUrl.classList.remove("hidden"); tabUrl.classList.add("active"); }
+  
   if(which==="spec"){ panelSpec.classList.remove("hidden"); tabSpec.classList.add("active"); }
 }
 tabValidate.addEventListener("click", ()=>showTab("validate"));
@@ -109,31 +109,6 @@ document.querySelector("#btn-validate-file").addEventListener("click", async ()=
   }catch(e){ setStatus(e?.message || "Validation failed.","error"); }
 });
 
-// URL validation
-document.querySelector("#btn-validate-url").addEventListener("click", async ()=>{
-  try{
-    const statusUrl = $("#status-url");
-    function setStatusUrl(text,kind="info",loading=false){
-      statusUrl.innerHTML = `
-        <div class="status-inner ${loading?"loading":""}">
-          ${loading?'<div class="spinner"></div>':''}
-          <span>${text}</span>
-          ${loading?'<div class="bar"><div class="bar-fill"></div></div>':''}
-        </div>`;
-      statusUrl.classList.remove("hidden");
-      statusUrl.classList.toggle("error", kind==="error");
-    }
-    function clearStatusUrl(){ statusUrl.classList.add("hidden"); statusUrl.innerHTML=""; }
-
-    resultsBox.classList.add("hidden");
-    const url = document.querySelector("#feed-url").value.trim();
-    if(!url) return setStatusUrl("Please enter a feed URL.","error");
-    const form = new FormData();
-    form.append("feed_url", url);
-    form.append("delimiter", document.querySelector("#delimiter-url").value || "");
-    form.append("encoding", document.querySelector("#encoding-url").value || "utf-8");
-    setStatusUrl("Fetching and validating URL…","info",true);
-    const res = await fetch("/validate/url",{method:"POST",body:form});
     let data = null;
     try { data = await res.json(); } catch(e) {
       const txt = await res.text();
