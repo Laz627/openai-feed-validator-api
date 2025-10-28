@@ -132,8 +132,8 @@ URL_RE = re.compile(r"^https?://", re.IGNORECASE)
 ALNUM_RE = re.compile(r"^[A-Za-z0-9._\\-]+$")
 COUNTRY_ALPHA2_RE = re.compile(r"^[A-Za-z]{2}$")
 # lenient units (imperial/metric) for weight & dimensions
-WEIGHT_RE = re.compile(r"^\\s*\\d+(\\.\\d+)?\\s*(lb|lbs|kg|g|oz)\\s*$", re.IGNORECASE)
-DIMENSION_RE = re.compile(r"^\\s*\\d+(\\.\\d+)?\\s*(mm|cm|in|inch|inches)\\s*$", re.IGNORECASE)
+WEIGHT_RE = re.compile(r"^\s*\d+(\.\d+)?\s*(lb|lbs|kg|g|oz)\s*$", re.IGNORECASE)
+DIMENSION_RE = re.compile(r"^\s*\d+(\.\d+)?\s*(mm|cm|in|inch|inches)\s*$", re.IGNORECASE)
 
 # Hard cap on rows to validate (MVP)
 ROW_CAP = 50000
@@ -205,7 +205,7 @@ def validate_records(records: List[Dict[str, Any]]) -> ValidateResponse:
     seen_ids: set[str] = set()
 
     # Header-level required presence
-    header = list(records[0].keys()) if records else []
+    header = sorted({k for rec in records for k in rec.keys()}) if records else []
     for f in REQUIRED_FIELDS:
         if f not in header:
             issues.append(Issue(
@@ -459,7 +459,7 @@ def validate_records(records: List[Dict[str, Any]]) -> ValidateResponse:
         if r.get("pickup_method") and r["pickup_method"] not in PICKUP_ENUM:
             _push_issue(issues, error_rows, idx, rid, "pickup_method", "OF-281", "warning",
                         'pickup_method must be one of: "in_store", "reserve", "not_supported".', r["pickup_method"])
-        if r.get("pickup_sla") and not re.match(r"^\\d+\\s+\\w+$", r["pickup_sla"]):
+        if r.get("pickup_sla") and not re.match(r"^\d+\s+\w+$", r["pickup_sla"]):
             _push_issue(issues, error_rows, idx, rid, "pickup_sla", "OF-282", "warning",
                         "pickup_sla should be a positive integer + unit (e.g., '1 day').", r["pickup_sla"])
 
@@ -557,6 +557,8 @@ def parse_as_csv_tsv(data: bytes, delimiter: str, encoding: str) -> List[Dict[st
     sio.seek(0)
     dict_reader = csv.DictReader(sio, delimiter=delim)
     dict_reader.fieldnames = norm_header  # force normalized header
+    # Skip the original header row since fieldnames are fixed
+    next(dict_reader, None)
 
     out: List[Dict[str, Any]] = []
     for row in dict_reader:
