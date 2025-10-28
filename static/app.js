@@ -265,6 +265,13 @@ function applyFilters(){
     }).join("");
     noteTruncate?.classList.toggle("hidden", filtered.length <= limit);
   }
+  if(noteTruncate){
+    noteTruncate.classList.add("hidden");
+  }
+  if(statTotal) statTotal.textContent = "-";
+  if(statErrors) statErrors.textContent = "-";
+  if(statWarnings) statWarnings.textContent = "-";
+  if(statPass) statPass.textContent = "-";
 }
 
 function renderResults(data){
