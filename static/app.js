@@ -124,7 +124,7 @@ $("#btn-validate-file").addEventListener("click", async () => {
     form.append("delimiter", $("#delimiter").value || ",");
     form.append("encoding", $("#encoding").value || "utf-8");
 
-    setStatus("Validating file…");
+    setStatus("Validating file…", "info", true);
     const res = await fetch("/validate/file", { method: "POST", body: form });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || res.statusText);
@@ -147,7 +147,7 @@ $("#btn-validate-url").addEventListener("click", async () => {
     form.append("delimiter", $("#delimiter-url").value || "");
     form.append("encoding", $("#encoding-url").value || "utf-8");
 
-    setStatus("Fetching and validating URL…");
+    setStatus("Fetching and validating URL…", "info", true);
     const res = await fetch("/validate/url", { method: "POST", body: form });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || res.statusText);
