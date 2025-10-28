@@ -366,6 +366,126 @@ function applyFilters(){
     }).join("");
     noteTruncate?.classList.toggle("hidden", filtered.length <= limit);
   }
+  statusBox.classList.remove("hidden", "error", "success");
+  if(type === "success"){
+    statusBox.classList.add("success");
+  }else if(type === "error"){
+    statusBox.classList.add("error");
+  }
+  const icon = type === "success" ? "✅" : type === "error" ? "⚠️" : "ℹ️";
+  const iconHtml = spinner ? '<div class="spinner" role="status" aria-label="Validating"></div>' : `<span class="status-icon">${icon}</span>`;
+  statusBox.innerHTML = `
+    <div class="status-card">
+      ${iconHtml}
+      <div>
+        ${title ? `<p class="status-title">${escapeHtml(title)}</p>` : ""}
+        ${subtitle ? `<p class="status-subtitle">${escapeHtml(subtitle)}</p>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function resetResults(){
+  resultsWrap?.classList.add("hidden");
+  issuesTable?.classList.remove("is-hidden");
+  if(issuesBody) issuesBody.innerHTML = "";
+  noResultsEl?.classList.add("hidden");
+  noIssuesEl?.classList.add("hidden");
+  specFilterEl?.classList.add("hidden");
+  specFilterEl && (specFilterEl.innerHTML = "");
+  noteTruncate?.classList.add("hidden");
+  summaryTruncate?.classList.add("hidden");
+  if(statTotal) statTotal.textContent = "-";
+  if(statErrors) statErrors.textContent = "-";
+  if(statWarnings) statWarnings.textContent = "-";
+  if(statPass) statPass.textContent = "-";
+  allIssues = [];
+  filterSeverity = "all";
+  searchTerm = "";
+  specFilter = null;
+  filterSearchInput && (filterSearchInput.value = "");
+  severityChips.forEach((chip) => chip.classList.toggle("active", chip.dataset.severity === "all"));
+  updateChipCounts();
+}
+
+function updateChipCounts(){
+  if(!countAll || !countError || !countWarning) return;
+  const errorCount = allIssues.filter((issue) => (issue.severity || "").toLowerCase() === "error").length;
+  const warningCount = allIssues.filter((issue) => (issue.severity || "").toLowerCase() === "warning").length;
+  countAll.textContent = allIssues.length.toLocaleString();
+  countError.textContent = errorCount.toLocaleString();
+  countWarning.textContent = warningCount.toLocaleString();
+}
+
+function applyFilters(){
+  if(!issuesBody) return;
+  const limit = 1000;
+  let filtered = allIssues;
+  if(filterSeverity !== "all"){
+    filtered = filtered.filter((issue) => (issue.severity || "").toLowerCase() === filterSeverity);
+  }
+  if(searchTerm){
+    const q = searchTerm.toLowerCase();
+    filtered = filtered.filter((issue) => {
+      return [
+        issue.row_index,
+        issue.item_id,
+        issue.field,
+        issue.rule_id,
+        issue.message,
+        issue.sample_value
+      ].some((val) => val !== undefined && val !== null && String(val).toLowerCase().includes(q));
+    });
+  }
+  if(specFilter){
+    const needle = specFilter.query.toLowerCase();
+    filtered = filtered.filter((issue) => {
+      return [issue.field, issue.rule_id, issue.rule_text]
+        .some((val) => val && String(val).toLowerCase().includes(needle));
+    });
+  }
+
+  const hasIssues = allIssues.length > 0;
+  const hadFilters = filterSeverity !== "all" || !!searchTerm || !!specFilter;
+  const showNoResults = hasIssues && filtered.length === 0 && hadFilters;
+
+  noResultsEl?.classList.toggle("hidden", !showNoResults);
+  issuesTable?.classList.toggle("is-hidden", !hasIssues || filtered.length === 0);
+
+  if(filtered.length === 0){
+    issuesBody.innerHTML = "";
+  }else{
+    const slice = filtered.slice(0, limit);
+    issuesBody.innerHTML = slice.map((issue, idx) => {
+      const rowIndex = typeof issue.row_index === "number" ? issue.row_index + 1 : issue.row_index ?? "";
+      const severity = (issue.severity || "info").toLowerCase();
+      const ruleId = issue.rule_id ?? "";
+      const tooltip = issue.rule_text || issue.message || ruleId;
+      const sampleValue = issue.sample_value ?? "";
+      const sampleContent = sampleValue
+        ? `<span class="sample-value">${escapeHtml(sampleValue)}</span><button type="button" class="copy-btn" data-copy="${escapeAttr(sampleValue)}" aria-label="Copy sample value">Copy</button>`
+        : '<span class="muted">—</span>';
+      return `
+        <tr>
+          <td class="sticky-col col-index" data-label="#">${escapeHtml(rowIndex ?? "")}</td>
+          <td class="sticky-col col-item" data-label="Item ID">${escapeHtml(issue.item_id ?? "")}</td>
+          <td data-label="Field">${escapeHtml(issue.field ?? "")}</td>
+          <td data-label="Rule"><span class="rule-id" title="${escapeAttr(tooltip)}">${escapeHtml(ruleId)}</span></td>
+          <td data-label="Severity"><span class="sev-${escapeHtml(severity)}">${escapeHtml(severity)}</span></td>
+          <td data-label="Message">${escapeHtml(issue.message ?? "")}</td>
+          <td data-label="Sample" class="sample-cell">${sampleContent}</td>
+        </tr>
+      `;
+    }).join("");
+    noteTruncate?.classList.toggle("hidden", filtered.length <= limit);
+  }
+  if(noteTruncate){
+    noteTruncate.classList.add("hidden");
+  }
+  if(statTotal) statTotal.textContent = "-";
+  if(statErrors) statErrors.textContent = "-";
+  if(statWarnings) statWarnings.textContent = "-";
+  if(statPass) statPass.textContent = "-";
 }
 
 function renderResults(data){
