@@ -55,6 +55,7 @@ const btnCsv = $("#btn-download-csv");
 const countAll = $("#count-all");
 const countError = $("#count-error");
 const countWarning = $("#count-warning");
+const countOpportunity = $("#count-opportunity");
 const stepOne = $(".step-1");
 const stepTwo = $(".step-2");
 const stepThree = $(".step-3");
@@ -189,9 +190,13 @@ function updateChipCounts(){
   if(!countAll || !countError || !countWarning) return;
   const errorCount = allIssues.filter((issue) => (issue.severity || "").toLowerCase() === "error").length;
   const warningCount = allIssues.filter((issue) => (issue.severity || "").toLowerCase() === "warning").length;
+  const opportunityCount = allIssues.filter((issue) => (issue.severity || "").toLowerCase() === "opportunity").length;
   countAll.textContent = allIssues.length.toLocaleString();
   countError.textContent = errorCount.toLocaleString();
   countWarning.textContent = warningCount.toLocaleString();
+  if(countOpportunity){
+    countOpportunity.textContent = opportunityCount.toLocaleString();
+  }
 }
 
 function applyFilters(){
@@ -235,20 +240,24 @@ function applyFilters(){
     const slice = filtered.slice(0, limit);
     issuesBody.innerHTML = slice.map((issue, idx) => {
       const rowIndex = typeof issue.row_index === "number" ? issue.row_index + 1 : issue.row_index ?? "";
+      const rowDisplay = rowIndex === "" || rowIndex === null || rowIndex === undefined ? "—" : rowIndex;
       const severity = (issue.severity || "info").toLowerCase();
+      const severityLabel = severity.charAt(0).toUpperCase() + severity.slice(1);
       const ruleId = issue.rule_id ?? "";
       const tooltip = issue.rule_text || issue.message || ruleId;
+      const itemId = issue.item_id ?? "";
+      const itemDisplay = itemId ? itemId : "—";
       const sampleValue = issue.sample_value ?? "";
       const sampleContent = sampleValue
         ? `<span class="sample-value">${escapeHtml(sampleValue)}</span><button type="button" class="copy-btn" data-copy="${escapeAttr(sampleValue)}" aria-label="Copy sample value">Copy</button>`
         : '<span class="muted">—</span>';
       return `
         <tr>
-          <td class="sticky-col col-index" data-label="#">${escapeHtml(rowIndex ?? "")}</td>
-          <td class="sticky-col col-item" data-label="Item ID">${escapeHtml(issue.item_id ?? "")}</td>
+          <td class="sticky-col col-index" data-label="#">${escapeHtml(rowDisplay)}</td>
+          <td class="sticky-col col-item" data-label="Item ID">${escapeHtml(itemDisplay)}</td>
           <td data-label="Field">${escapeHtml(issue.field ?? "")}</td>
           <td data-label="Rule"><span class="rule-id" title="${escapeAttr(tooltip)}">${escapeHtml(ruleId)}</span></td>
-          <td data-label="Severity"><span class="sev-${escapeHtml(severity)}">${escapeHtml(severity)}</span></td>
+          <td data-label="Severity"><span class="sev-${escapeHtml(severity)}">${escapeHtml(severityLabel)}</span></td>
           <td data-label="Message">${escapeHtml(issue.message ?? "")}</td>
           <td data-label="Sample" class="sample-cell">${sampleContent}</td>
         </tr>

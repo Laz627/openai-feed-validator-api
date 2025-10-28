@@ -2,8 +2,9 @@
 :root{
   --bg:#0b0c10; --panel:#11131a; --card:#171923; --muted:#8b90a0; --text:#e8eaf0;
   --accent:#7c5cff; --accent-2:#59b7ff; --ok:#8be38b; --warn:#ffcd4d; --err:#ff7a7a;
-  --pill:#1f2330; --border:#232635
+  --opp:#5fd6a6; --pill:#1f2330; --border:#232635
 }
+.hidden{display:none!important}
 html,body{height:100%}
 body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#0b0c10,#0e1016);color:var(--text)}
 
@@ -111,6 +112,7 @@ input{background:#0e1016;color:var(--text);border:1px solid var(--border);border
 .sev-error{color:var(--err);font-weight:700}
 .sev-warning{color:var(--warn);font-weight:700}
 .sev-info{color:var(--accent);font-weight:600}
+.sev-opportunity{color:var(--opp);font-weight:700}
 .rule-id{font-family:"Roboto Mono",Consolas,monospace;font-size:12px;display:inline-flex;align-items:center;gap:4px}
 .sample-cell{max-width:320px}
 .sample-value{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;word-break:break-word;font-family:Menlo,Consolas,monospace;font-size:12px}
