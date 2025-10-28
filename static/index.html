@@ -75,7 +75,7 @@
         <small class="hint">Tip: Max 50,000 rows. Split large feeds. JSON arrays or CSV/TSV with headers.</small>
       </div>
 
-      <div id="status" class="status hidden"></div>
+      <div id="status" class="status hidden" aria-live="polite"></div>
 
       <div id="results" class="results hidden">
         <div class="stats">
@@ -84,8 +84,8 @@
           <div><span id="stat-warnings" class="stat-num warn">-</span><span class="stat-label">Warnings</span></div>
           <div><span id="stat-pass" class="stat-num ok">-</span><span class="stat-label">Pass Rate</span></div>
           <div class="spacer"></div>
-          <button id="btn-download-json" class="btn small">Download JSON</button>
-          <button id="btn-download-csv" class="btn small">Download CSV</button>
+          <button id="btn-download-json" class="btn small" disabled>Download JSON</button>
+          <button id="btn-download-csv" class="btn small" disabled>Download CSV</button>
         </div>
         <table class="issues">
           <thead>
@@ -100,14 +100,19 @@
     </section>
 
     <section id="panel-spec" class="panel hidden">
+      <div class="card">
+        <h3>About the OpenAI product feed spec</h3>
+        <p class="muted">These summaries are adapted from the <a href="https://developers.openai.com/commerce/specs/feed" target="_blank" rel="noopener">official OpenAI product feed specification</a>. Required fields must be present for every item, while recommended fields unlock richer answers, better ranking signals, and checkout experiences.</p>
+        <p class="muted">Use the lists below to understand why each field matters before you start modelling your catalog. The validator checks the same rules described in the documentation&mdash;including formatting, dependencies, and conditional requirements.</p>
+      </div>
       <div class="grid two">
         <div class="card">
           <h3>Required fields</h3>
-          <ul id="req-list" class="pill-list"></ul>
+          <ul id="req-list" class="spec-list"></ul>
         </div>
         <div class="card">
           <h3>Recommended fields</h3>
-          <ul id="rec-list" class="pill-list"></ul>
+          <ul id="rec-list" class="spec-list"></ul>
         </div>
       </div>
       <div class="card">
