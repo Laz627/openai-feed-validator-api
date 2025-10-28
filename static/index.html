@@ -46,7 +46,7 @@
 
     <section class="tabs">
       <button id="tab-validate" class="tab active">Validate (Upload)</button>
-      <button id="tab-url" class="tab">Validate by URL</button>
+      
       <button id="tab-spec" class="tab">Spec & Requirements</button>
     </section>
 
@@ -97,31 +97,6 @@
         </table>
         <div id="note-truncate" class="truncate-note hidden">Showing first 1,000 issues… download CSV for full list.</div>
       </div>
-    </section>
-
-    <section id="panel-url" class="panel hidden">
-      <div class="card">
-        <div class="field-row">
-          <label for="feed-url" class="label">Feed URL (Raw GitHub/Gist, JSON/CSV/TSV)</label>
-          <input id="feed-url" placeholder="https://example.com/feed.json" />
-        </div>
-        <div class="field-grid">
-          <div>
-            <label for="delimiter-url" class="label">Delimiter (CSV/TSV)</label>
-            <input id="delimiter-url" placeholder="auto" />
-          </div>
-          <div>
-            <label for="encoding-url" class="label">Encoding</label>
-            <input id="encoding-url" value="utf-8" />
-          </div>
-        </div>
-        <div class="actions">
-          <button id="btn-validate-url" class="btn primary">Fetch & Validate</button>
-          <a class="btn ghost" href="/samples/sample-valid.json" target="_blank">Open sample JSON</a>
-        </div>
-        <small class="hint">Use the <strong>raw</strong> URL for GitHub/Gist: it should return file content directly.</small>
-      </div>
-      <div id="status-url" class="status hidden"></div>
     </section>
 
     <section id="panel-spec" class="panel hidden">
