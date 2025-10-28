@@ -1,0 +1,39 @@
+:root { --fg:#111; --muted:#666; --bg:#fff; --line:#e5e7eb; --primary:#111; --error:#b91c1c; --warn:#b45309; }
+* { box-sizing: border-box; }
+body { margin:0; font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:var(--fg); background:var(--bg); }
+.container { max-width:1100px; margin:0 auto; padding:24px; }
+.header h1 { margin:0 0 6px; font-size:28px; }
+.header p { margin:0 0 16px; color:var(--muted); }
+.card { border:1px solid var(--line); border-radius:12px; padding:16px; background:#fff; }
+.tabs { display:flex; gap:8px; margin-bottom:12px; }
+.tab { border:1px solid var(--line); background:#f3f4f6; border-radius:999px; padding:8px 12px; cursor:pointer; }
+.tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.panel.hidden { display:none; }
+.row { display:flex; gap:8px; align-items:center; margin-top:10px; }
+.row label { width:90px; color:var(--muted); }
+.primary { margin-top:12px; background:var(--primary); color:#fff; border:none; border-radius:8px; padding:10px 14px; cursor:pointer; }
+.hint { color:var(--muted); font-size:12px; margin-top:8px; display:block; }
+
+.status { margin-top:14px; border:1px dashed var(--line); padding:10px; border-radius:8px; }
+.status.hidden { display:none; }
+
+.results { margin-top:24px; }
+.results.hidden { display:none; }
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+.stat { border:1px solid var(--line); border-radius:10px; padding:10px; }
+.stat .label { font-size:12px; color:var(--muted); }
+.stat .value { font-weight:600; font-size:18px; }
+
+.downloads { display:flex; gap:8px; margin:10px 0; }
+.downloads button { border:1px solid var(--line); background:#fff; border-radius:8px; padding:8px 12px; cursor:pointer; }
+
+.tablewrap { border:1px solid var(--line); border-radius:10px; overflow:auto; }
+table { width:100%; border-collapse:separate; border-spacing:0; font-size:14px; }
+th, td { padding:8px 10px; text-align:left; vertical-align:top; }
+thead th { background:#f9fafb; border-bottom:1px solid var(--line); position:sticky; top:0; }
+tbody tr + tr td { border-top:1px solid var(--line); }
+.sev-error { color:var(--error); font-weight:600; }
+.sev-warning { color:var(--warn); font-weight:600; }
+
+.footer { margin-top:24px; color:var(--muted); }
+.footer a { color:inherit; }
