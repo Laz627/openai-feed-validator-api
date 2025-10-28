@@ -155,3 +155,8 @@ function populateSpec(){
   c.innerHTML = RECOMMENDED.map(f=>`<li><code>${f}</code></li>`).join("");
 }
 populateSpec();
+
+
+// Show note when results displayed
+const itemNote = document.getElementById("item-note");
+if(itemNote){ itemNote.style.display = "block"; }
