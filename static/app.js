@@ -134,8 +134,12 @@ document.querySelector("#btn-validate-url").addEventListener("click", async ()=>
     form.append("encoding", document.querySelector("#encoding-url").value || "utf-8");
     setStatusUrl("Fetching and validating URL…","info",true);
     const res = await fetch("/validate/url",{method:"POST",body:form});
-    const data = await res.json();
-    if(!res.ok) throw new Error(data?.error || res.statusText);
+    let data = null;
+    try { data = await res.json(); } catch(e) {
+      const txt = await res.text();
+      throw new Error(txt || res.statusText);
+    }
+    if(!res.ok) throw new Error((data && (data.detail || data.error)) || res.statusText);
     clearStatusUrl(); renderResults(data);
   }catch(e){
     const statusUrl = $("#status-url");
