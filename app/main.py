@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import csv, io, re, httpx
+from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI(title="OpenAI Product Feed Validator")
 
@@ -120,3 +122,5 @@ def _issue(row_idx, item_id, field, rule, severity, msg, sample):
         "sample_value": sample,
         "remediation": []
     }
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
