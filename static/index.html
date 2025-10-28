@@ -27,100 +27,127 @@
 
   <main class="container">
     <section class="intro">
-      <div class="callout">
-        <h2>What this tool does</h2>
-        <p>
-          This validator checks your product feed against OpenAI's product feed requirements: required vs. recommended fields, 
-          dependency rules (e.g., <code>enable_checkout</code> requires <code>enable_search</code>), data types, and formats
-          (prices, dates, URLs, enums, etc.).
-        </p>
-        <p><strong>How it differs from Google Merchant Center feeds</strong>: OpenAI’s schema emphasizes enablement flags (<code>enable_search</code>, <code>enable_checkout</code>), 
-          returns/merchant fields, and conversational surfaces. You’ll also see more explicit dependencies (e.g., <code>sale_price</code> requires an effective date range).</p>
-        <ul>
-          <li><strong>Max 50,000 rows per run</strong> (MVP cap for speed & cost). Split larger feeds into chunks.</li>
-          <li>Supports: <strong>JSON arrays</strong>, and <strong>CSV/TSV</strong> (auto delimiter detection).</li>
-          <li>URL validation checks syntax; deep HTTP status checks are skipped to keep validation fast.</li>
+      <div class="info-card">
+        <h2>Validate your product feed</h2>
+        <p>Upload a JSON array or CSV/TSV with headers. We check required vs recommended fields and dependencies.</p>
+        <ul class="meta-list">
+          <li>≤ 50&nbsp;000 rows per run</li>
+          <li>JSON / CSV / TSV</li>
+          <li>Checks formatting, enums, and rule dependencies</li>
         </ul>
       </div>
     </section>
 
-    <section class="tabs">
-      <button id="tab-validate" class="tab active">Validate (Upload)</button>
-      
-      <button id="tab-spec" class="tab">Spec & Requirements</button>
+    <section class="tabs" role="tablist">
+      <button id="tab-validate" class="tab active" role="tab" aria-controls="panel-validate" aria-selected="true">Validate</button>
+      <button id="tab-spec" class="tab" role="tab" aria-controls="panel-spec" aria-selected="false">Spec & Requirements</button>
     </section>
 
-    <section id="panel-validate" class="panel">
-      <div class="card">
-        <div class="field-row">
-          <label for="file-input" class="label">Upload feed file (JSON / CSV / TSV)</label>
-          <input type="file" id="file-input" accept=".json,.csv,.tsv,text/csv,text/tab-separated-values,application/json" />
-        </div>
-        <div class="field-grid">
-          <div>
-            <label for="delimiter" class="label">Delimiter (CSV/TSV)</label>
-            <input id="delimiter" placeholder="auto" />
+    <section id="panel-validate" class="panel" role="tabpanel" aria-labelledby="tab-validate">
+      <ol class="flow-steps" aria-label="Validation steps">
+        <li class="step step-1 current"><span class="step-number">1</span><span class="step-label">Add file</span></li>
+        <li class="step step-2"><span class="step-number">2</span><span class="step-label">Validate</span></li>
+        <li class="step step-3"><span class="step-number">3</span><span class="step-label">Review &amp; Export</span></li>
+      </ol>
+
+      <div class="card upload-card">
+        <div id="drop-zone" class="drop-zone" tabindex="0" role="group" aria-labelledby="drop-zone-label">
+          <div class="drop-content">
+            <div class="drop-icon" aria-hidden="true">⬆</div>
+            <div>
+              <p id="drop-zone-label" class="drop-title">Drag &amp; drop your feed</p>
+              <p class="drop-subtitle">or</p>
+              <button type="button" id="btn-browse" class="btn secondary">Browse files</button>
+            </div>
           </div>
-          <div>
-            <label for="encoding" class="label">Encoding</label>
+          <input type="file" id="file-input" aria-label="Upload feed file" accept=".json,.csv,.tsv,text/csv,text/tab-separated-values,application/json" />
+        </div>
+        <p id="selected-file" class="selected-file" aria-live="polite">No file selected yet.</p>
+
+        <details class="advanced">
+          <summary>Advanced (delimiter / encoding)</summary>
+          <div class="advanced-grid">
+            <label class="label" for="delimiter">Delimiter</label>
+            <input id="delimiter" placeholder="auto" />
+            <label class="label" for="encoding">Encoding</label>
             <input id="encoding" value="utf-8" />
           </div>
-        </div>
+        </details>
+
         <div class="actions">
           <button id="btn-validate-file" class="btn primary">Validate</button>
-          <a class="btn ghost" href="/samples/sample-valid.json" download>Download sample JSON (valid)</a>
-          <a class="btn ghost" href="/samples/sample-broken.json" download>Sample JSON (with issues)</a>
-          <a class="btn ghost" href="/samples/sample-valid.csv" download>Sample CSV (valid)</a>
+          <div class="secondary-actions">
+            <a class="btn ghost" href="/samples/sample-valid.json" download>Download sample JSON</a>
+            <a class="btn ghost" href="/samples/sample-broken.json" download>Sample JSON (issues)</a>
+            <a class="btn ghost" href="/samples/sample-valid.csv" download>Sample CSV</a>
+          </div>
         </div>
-        <small class="hint">Tip: Max 50,000 rows. Split large feeds. JSON arrays or CSV/TSV with headers.</small>
       </div>
 
-      <div id="status" class="status hidden"></div>
+      <div id="status" class="status hidden" aria-live="polite"></div>
 
       <div id="results" class="results hidden">
-        <div class="stats">
-          <div><span id="stat-total" class="stat-num">-</span><span class="stat-label">Items</span></div>
-          <div><span id="stat-errors" class="stat-num error">-</span><span class="stat-label">Errors</span></div>
-          <div><span id="stat-warnings" class="stat-num warn">-</span><span class="stat-label">Warnings</span></div>
-          <div><span id="stat-pass" class="stat-num ok">-</span><span class="stat-label">Pass Rate</span></div>
-          <div class="spacer"></div>
-          <button id="btn-download-json" class="btn small">Download JSON</button>
-          <button id="btn-download-csv" class="btn small">Download CSV</button>
+        <div id="summary-bar" class="summary-bar" aria-live="polite">
+          <div class="summary-stat"><span class="stat-label">Items</span><span id="stat-total" class="stat-num">-</span></div>
+          <div class="summary-stat"><span class="stat-label">Errors</span><span id="stat-errors" class="stat-num error">-</span></div>
+          <div class="summary-stat"><span class="stat-label">Warnings</span><span id="stat-warnings" class="stat-num warn">-</span></div>
+          <div class="summary-stat"><span class="stat-label">Pass Rate</span><span id="stat-pass" class="stat-num ok">-</span></div>
+          <div id="summary-truncate" class="summary-chip hidden" role="note">This report includes the first 50&nbsp;000 rows.</div>
+          <div class="summary-spacer"></div>
+          <button id="btn-download-json" class="btn small" disabled>Download JSON</button>
+          <button id="btn-download-csv" class="btn small" disabled>Download CSV</button>
         </div>
-        <table class="issues">
+
+        <div class="results-controls">
+          <div class="filter-chips" role="group" aria-label="Filter by severity">
+            <button type="button" class="chip active" data-severity="all">All <span class="chip-count" id="count-all">0</span></button>
+            <button type="button" class="chip" data-severity="error">Errors <span class="chip-count" id="count-error">0</span></button>
+            <button type="button" class="chip" data-severity="warning">Warnings <span class="chip-count" id="count-warning">0</span></button>
+          </div>
+          <div class="filter-search">
+            <input type="search" id="filter-search" placeholder="Filter by item, field, or rule" aria-label="Filter results" />
+          </div>
+        </div>
+
+        <div id="spec-filter" class="spec-filter hidden" aria-live="polite"></div>
+
+        <table class="issues" role="grid">
           <thead>
             <tr>
-              <th>#</th><th>Item ID</th><th>Field</th><th>Rule</th><th>Severity</th><th>Message</th><th>Sample</th>
+              <th class="sticky-col col-index" scope="col">#</th>
+              <th class="sticky-col col-item" scope="col">Item ID</th>
+              <th scope="col">Field</th>
+              <th scope="col">Rule</th>
+              <th scope="col">Severity</th>
+              <th scope="col">Message</th>
+              <th scope="col">Sample</th>
             </tr>
           </thead>
           <tbody id="issues-body"></tbody>
         </table>
-        <div id="note-truncate" class="truncate-note hidden">Showing first 1,000 issues… download CSV for full list.</div>
+        <div id="note-truncate" class="truncate-note hidden">Showing first 1&nbsp;000 issues. Download CSV for the complete list.</div>
+        <div id="no-results" class="empty-state hidden" role="status">No matching results for this filter.</div>
+        <div id="no-issues" class="empty-card hidden" role="status">
+          <div class="empty-icon" aria-hidden="true">✅</div>
+          <div>
+            <h3>No issues found.</h3>
+            <p>Your feed passed all checks.</p>
+          </div>
+          <div class="empty-actions">
+            <button id="btn-noissues-json" class="btn ghost" disabled>Download JSON</button>
+            <button id="btn-noissues-csv" class="btn ghost" disabled>Download CSV</button>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="panel-spec" class="panel hidden">
-      <div class="grid two">
-        <div class="card">
-          <h3>Required fields</h3>
-          <ul id="req-list" class="pill-list"></ul>
-        </div>
-        <div class="card">
-          <h3>Recommended fields</h3>
-          <ul id="rec-list" class="pill-list"></ul>
-        </div>
-      </div>
+    <section id="panel-spec" class="panel hidden" role="tabpanel" aria-labelledby="tab-spec">
       <div class="card">
-        <h3>Key rules & dependencies</h3>
-        <ul class="rules">
-          <li><code>enable_checkout</code> can be <code>true</code> only when <code>enable_search</code> is <code>true</code>.</li>
-          <li><code>sale_price</code> requires <code>sale_price_effective_date</code> in format <code>YYYY-MM-DD / YYYY-MM-DD</code>, and must be ≤ <code>price</code>.</li>
-          <li>If <code>availability</code> is <code>preorder</code>, you must provide a future <code>availability_date</code>.</li>
-          <li>If you use any of <code>color</code>, <code>size</code>, <code>size_system</code>, <code>gender</code>, you must provide <code>item_group_id</code>.</li>
-          <li><code>unit_pricing_measure</code> requires <code>base_measure</code> (and vice versa).</li>
-        </ul>
-        <a class="btn ghost" href="https://developers.openai.com/commerce/specs/feed" target="_blank" rel="noopener">View full spec</a>
+        <h3>Understand the fields</h3>
+        <p class="muted">Browse the OpenAI commerce feed schema. Each card highlights whether the field is required, recommended, or conditional and notes any dependencies. Click a field to filter validation results for related rules.</p>
+        <a class="btn ghost" href="https://developers.openai.com/commerce/specs/feed" target="_blank" rel="noopener">View full documentation</a>
       </div>
+      <div class="spec-grid" id="spec-grid" role="list"></div>
     </section>
   </main>
 
