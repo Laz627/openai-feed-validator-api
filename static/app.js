@@ -70,6 +70,7 @@ let filterSeverity = "all";
 let searchTerm = "";
 let specFilter = null;
 let validateLabel = btnValidate?.textContent || "Validate";
+let activeFile = null;
 
 function escapeHtml(value){
   if(value === null || value === undefined) return "";
@@ -190,16 +191,47 @@ function computeScoreGrade({ itemsTotal, errorCount, warningCount, errorItemCoun
   return { letter: "D", message: baseMessage };
 }
 
-function updateSelectedFile(){
+function updateSelectedFileLabel(){
   if(!selectedFileLabel) return;
-  if(fileInput?.files?.length){
-    const file = fileInput.files[0];
-    const size = formatBytes(file.size);
-    selectedFileLabel.textContent = size ? `${file.name} (${size})` : file.name;
-    updateStepState("file-chosen");
+  if(activeFile){
+    const size = formatBytes(activeFile.size);
+    selectedFileLabel.textContent = size ? `${activeFile.name} (${size})` : activeFile.name;
   }else{
     selectedFileLabel.textContent = "No file selected yet.";
-    updateStepState("ready");
+  }
+}
+
+function setActiveFile(file, { syncInput = false, sourceFiles = null } = {}){
+  activeFile = file ?? null;
+
+  if(syncInput && activeFile && fileInput){
+    try{
+      if(typeof DataTransfer !== "undefined"){ // Some browsers restrict programmatic assignment
+        const dataTransfer = new DataTransfer();
+        const items = sourceFiles ? Array.from(sourceFiles) : [activeFile];
+        items.forEach((f) => dataTransfer.items.add(f));
+        fileInput.files = dataTransfer.files;
+      }
+    }catch(err){
+      // Ignore if assignment is blocked; we'll rely on the cached file reference
+    }
+  }
+
+  if(syncInput && !activeFile && fileInput){
+    try{
+      fileInput.value = "";
+    }catch(err){ /* noop */ }
+  }
+
+  updateSelectedFileLabel();
+  updateStepState(activeFile ? "file-chosen" : "ready");
+}
+
+function syncSelectedFileFromInput(){
+  if(fileInput?.files?.length){
+    setActiveFile(fileInput.files[0]);
+  }else{
+    setActiveFile(null);
   }
 }
 
@@ -588,13 +620,15 @@ function handleDownloadCsv(){
 
 async function handleValidateClick(event){
   event.preventDefault();
-  if(!fileInput || !fileInput.files || fileInput.files.length === 0){
+  const fileFromInput = fileInput?.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
+  const file = fileFromInput || activeFile;
+
+  if(!file){
     renderStatus({ type: "error", title: "No file selected", subtitle: "Please add a feed file before validating." });
     updateStepState("ready");
     return;
   }
 
-  const file = fileInput.files[0];
   const formData = new FormData();
   formData.append("file", file);
   if(delimiterInput){
@@ -640,8 +674,7 @@ function handleDrop(event){
   event.preventDefault();
   const files = event.dataTransfer?.files;
   if(files && files.length){
-    fileInput.files = files;
-    updateSelectedFile();
+    setActiveFile(files[0], { syncInput: true, sourceFiles: files });
   }
   dropZone?.classList.remove("dragging");
 }
@@ -812,7 +845,7 @@ function initSpecFilterKeyboard(){
 }
 
 btnBrowse?.addEventListener("click", () => fileInput?.click());
-fileInput?.addEventListener("change", updateSelectedFile);
+fileInput?.addEventListener("change", syncSelectedFileFromInput);
 btnJson?.addEventListener("click", handleDownloadJson);
 btnCsv?.addEventListener("click", handleDownloadCsv);
 btnNoIssuesJson?.addEventListener("click", handleDownloadJson);
@@ -824,7 +857,7 @@ initFilters();
 initCopyButtons();
 renderSpecGrid();
 initSpecFilterKeyboard();
-updateSelectedFile();
+syncSelectedFileFromInput();
 setDownloadsEnabled(false);
 updateStepState("ready");
 updateChipCounts();
