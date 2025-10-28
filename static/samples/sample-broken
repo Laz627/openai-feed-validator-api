@@ -1,0 +1,22 @@
+[
+  {
+    "enable_search": "TRUE",
+    "enable_checkout": "true",
+    "id": "SKU*!!Bad",
+    "title": "ALL CAPS TITLE EXAMPLE THAT IS WAY TOO LONG XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "description": "<b>HTML desc should be plain text</b>",
+    "link": "not-a-url",
+    "product_category": "Backpacks",
+    "brand": "",
+    "material": "",
+    "weight": "five pounds",
+    "image_link": "http://example",
+    "price": "USD 19.99",
+    "availability": "maybe",
+    "inventory_quantity": "-2",
+    "seller_name": "",
+    "seller_url": "example.com",
+    "return_policy": "http://not-https.example.com/returns",
+    "return_window": "zero"
+  }
+]
