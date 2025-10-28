@@ -620,6 +620,7 @@ function handleDownloadCsv(){
 
 async function handleValidateClick(event){
   event.preventDefault();
+  renderStatus({ type: "info", title: "Starting validation…", spinner: true });
   const fileFromInput = fileInput?.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
   const file = fileFromInput || activeFile;
 
@@ -698,9 +699,8 @@ function initDragAndDrop(){
     }
   });
   dropZone.addEventListener("click", (event) => {
-    if(event.target !== btnBrowse){
-      fileInput?.click();
-    }
+    if (btnBrowse && btnBrowse.contains(event.target)) return;
+    fileInput?.click();
   });
 }
 
@@ -844,7 +844,7 @@ function initSpecFilterKeyboard(){
   });
 }
 
-btnBrowse?.addEventListener("click", () => fileInput?.click());
+btnBrowse?.addEventListener("click", (e) => { e.stopPropagation(); fileInput?.click(); });
 fileInput?.addEventListener("change", syncSelectedFileFromInput);
 btnJson?.addEventListener("click", handleDownloadJson);
 btnCsv?.addEventListener("click", handleDownloadCsv);
