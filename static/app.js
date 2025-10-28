@@ -54,7 +54,7 @@ const severityChips = $$(".chip");
 const statTotal = $("#stat-total");
 const statErrors = $("#stat-errors");
 const statWarnings = $("#stat-warnings");
-const statScore = $("#stat-score");
+const statPass = $("#stat-pass");
 const btnJson = $("#btn-download-json");
 const btnCsv = $("#btn-download-csv");
 const countAll = $("#count-all");
@@ -70,7 +70,6 @@ let filterSeverity = "all";
 let searchTerm = "";
 let specFilter = null;
 let validateLabel = btnValidate?.textContent || "Validate";
-let activeFile = null;
 
 function escapeHtml(value){
   if(value === null || value === undefined) return "";
@@ -94,144 +93,16 @@ function formatBytes(bytes){
   return `${num.toFixed(num >= 10 ? 0 : 1)} ${units[idx]}`;
 }
 
-function formatCount(value){
-  if(value === null || value === undefined) return "-";
-  if(typeof value === "number"){
-    return Number.isFinite(value) ? value.toLocaleString() : "-";
-  }
-  const num = Number(value);
-  return Number.isNaN(num) ? "-" : num.toLocaleString();
-}
-
-function getItemKey(issue){
-  if(issue === null || issue === undefined) return null;
-  if(issue.row_index !== undefined && issue.row_index !== null){
-    return `row-${issue.row_index}`;
-  }
-  if(issue.item_id){
-    return `item-${issue.item_id}`;
-  }
-  return null;
-}
-
-function getIssueRowKey(issue){
-  const itemKey = getItemKey(issue);
-  if(itemKey) return itemKey;
-  if(issue?.rule_id){
-    return `rule-${issue.rule_id}-${issue.field ?? ""}`;
-  }
-  return null;
-}
-
-function calculateIssueStats(){
-  let errorCount = 0;
-  let warningCount = 0;
-  const errorItems = new Set();
-  const warningItems = new Set();
-  const seenItems = new Set();
-
-  allIssues.forEach((issue) => {
-    const severity = (issue.severity || "").toLowerCase();
-    const key = getIssueRowKey(issue);
-    const itemKey = getItemKey(issue) || key;
-    if(itemKey) seenItems.add(itemKey);
-    if(severity === "error"){
-      errorCount += 1;
-      if(itemKey) errorItems.add(itemKey);
-    }else if(severity === "warning"){
-      warningCount += 1;
-      if(itemKey) warningItems.add(itemKey);
-    }
-  });
-
-  return {
-    errorCount,
-    warningCount,
-    totalIssues: allIssues.length,
-    errorItemCount: errorItems.size,
-    warningItemCount: warningItems.size,
-    itemCount: seenItems.size
-  };
-}
-
-function computeScoreGrade({ itemsTotal, errorCount, warningCount, errorItemCount }){
-  const total = Number.isFinite(itemsTotal) && itemsTotal > 0 ? itemsTotal : null;
-
-  if((itemsTotal === 0 || total === null) && errorCount === 0 && warningCount === 0){
-    return { letter: "-", message: "No items evaluated" };
-  }
-
-  if(errorCount === 0 && warningCount === 0){
-    return { letter: "A", message: "No issues detected" };
-  }
-
-  if(errorCount === 0){
-    const count = warningCount.toLocaleString();
-    const message = warningCount === 1 ? "1 warning to review" : `${count} warnings to review`;
-    return { letter: "B", message };
-  }
-
-  const itemsWithErrors = errorItemCount ?? 0;
-  const baseMessage = itemsWithErrors === 1
-    ? "1 item with errors"
-    : `${itemsWithErrors.toLocaleString()} items with errors`;
-
-  if(total !== null){
-    const ratio = itemsWithErrors / total;
-    if(ratio <= 0.1){
-      return { letter: "C", message: baseMessage };
-    }
-    return { letter: "D", message: baseMessage };
-  }
-
-  if(errorCount <= 5){
-    return { letter: "C", message: baseMessage };
-  }
-
-  return { letter: "D", message: baseMessage };
-}
-
-function updateSelectedFileLabel(){
+function updateSelectedFile(){
   if(!selectedFileLabel) return;
-  if(activeFile){
-    const size = formatBytes(activeFile.size);
-    selectedFileLabel.textContent = size ? `${activeFile.name} (${size})` : activeFile.name;
+  if(fileInput?.files?.length){
+    const file = fileInput.files[0];
+    const size = formatBytes(file.size);
+    selectedFileLabel.textContent = size ? `${file.name} (${size})` : file.name;
+    updateStepState("file-chosen");
   }else{
     selectedFileLabel.textContent = "No file selected yet.";
-  }
-}
-
-function setActiveFile(file, { syncInput = false, sourceFiles = null } = {}){
-  activeFile = file ?? null;
-
-  if(syncInput && activeFile && fileInput){
-    try{
-      if(typeof DataTransfer !== "undefined"){ // Some browsers restrict programmatic assignment
-        const dataTransfer = new DataTransfer();
-        const items = sourceFiles ? Array.from(sourceFiles) : [activeFile];
-        items.forEach((f) => dataTransfer.items.add(f));
-        fileInput.files = dataTransfer.files;
-      }
-    }catch(err){
-      // Ignore if assignment is blocked; we'll rely on the cached file reference
-    }
-  }
-
-  if(syncInput && !activeFile && fileInput){
-    try{
-      fileInput.value = "";
-    }catch(err){ /* noop */ }
-  }
-
-  updateSelectedFileLabel();
-  updateStepState(activeFile ? "file-chosen" : "ready");
-}
-
-function syncSelectedFileFromInput(){
-  if(fileInput?.files?.length){
-    setActiveFile(fileInput.files[0]);
-  }else{
-    setActiveFile(null);
+    updateStepState("ready");
   }
 }
 
@@ -280,123 +151,6 @@ function renderStatus({ type = "info", title = "", subtitle = "", spinner = fals
     statusBox.classList.remove("error", "success");
     statusBox.innerHTML = "";
     return;
-  }
-  statusBox.classList.remove("hidden", "error", "success");
-  if(type === "success"){
-    statusBox.classList.add("success");
-  }else if(type === "error"){
-    statusBox.classList.add("error");
-  }
-  const icon = type === "success" ? "✅" : type === "error" ? "⚠️" : "ℹ️";
-  const iconHtml = spinner ? '<div class="spinner" role="status" aria-label="Validating"></div>' : `<span class="status-icon">${icon}</span>`;
-  statusBox.innerHTML = `
-    <div class="status-card">
-      ${iconHtml}
-      <div>
-        ${title ? `<p class="status-title">${escapeHtml(title)}</p>` : ""}
-        ${subtitle ? `<p class="status-subtitle">${escapeHtml(subtitle)}</p>` : ""}
-      </div>
-    </div>
-  `;
-}
-
-function resetResults(){
-  resultsWrap?.classList.add("hidden");
-  issuesTable?.classList.remove("is-hidden");
-  if(issuesBody) issuesBody.innerHTML = "";
-  noResultsEl?.classList.add("hidden");
-  noIssuesEl?.classList.add("hidden");
-  specFilterEl?.classList.add("hidden");
-  specFilterEl && (specFilterEl.innerHTML = "");
-  noteTruncate?.classList.add("hidden");
-  summaryTruncate?.classList.add("hidden");
-  if(statTotal) statTotal.textContent = "-";
-  if(statErrors) statErrors.textContent = "-";
-  if(statWarnings) statWarnings.textContent = "-";
-  if(statScore){
-    statScore.textContent = "-";
-    delete statScore.dataset.grade;
-    statScore.removeAttribute("title");
-    statScore.setAttribute("aria-label", "Score not yet calculated");
-  }
-  allIssues = [];
-  filterSeverity = "all";
-  searchTerm = "";
-  specFilter = null;
-  filterSearchInput && (filterSearchInput.value = "");
-  severityChips.forEach((chip) => chip.classList.toggle("active", chip.dataset.severity === "all"));
-  updateChipCounts();
-}
-
-function updateChipCounts(){
-  const stats = calculateIssueStats();
-  if(countAll) countAll.textContent = stats.totalIssues.toLocaleString();
-  if(countError) countError.textContent = stats.errorCount.toLocaleString();
-  if(countWarning) countWarning.textContent = stats.warningCount.toLocaleString();
-  return stats;
-}
-
-function applyFilters(){
-  if(!issuesBody) return;
-  const limit = 1000;
-  let filtered = allIssues;
-  if(filterSeverity !== "all"){
-    filtered = filtered.filter((issue) => (issue.severity || "").toLowerCase() === filterSeverity);
-  }
-  if(searchTerm){
-    const q = searchTerm.toLowerCase();
-    filtered = filtered.filter((issue) => {
-      return [
-        issue.row_index,
-        issue.item_id,
-        issue.field,
-        issue.rule_id,
-        issue.message,
-        issue.sample_value
-      ].some((val) => val !== undefined && val !== null && String(val).toLowerCase().includes(q));
-    });
-  }
-  if(specFilter){
-    const needle = specFilter.query.toLowerCase();
-    filtered = filtered.filter((issue) => {
-      return [issue.field, issue.rule_id, issue.rule_text]
-        .some((val) => val && String(val).toLowerCase().includes(needle));
-    });
-  }
-
-  const hasIssues = allIssues.length > 0;
-  const hadFilters = filterSeverity !== "all" || !!searchTerm || !!specFilter;
-  const showNoResults = hasIssues && filtered.length === 0 && hadFilters;
-
-  noResultsEl?.classList.toggle("hidden", !showNoResults);
-  issuesTable?.classList.toggle("is-hidden", !hasIssues || filtered.length === 0);
-
-  if(filtered.length === 0){
-    issuesBody.innerHTML = "";
-  }else{
-    const slice = filtered.slice(0, limit);
-    issuesBody.innerHTML = slice.map((issue, idx) => {
-      const rowIndex = typeof issue.row_index === "number" ? issue.row_index + 1 : issue.row_index ?? "";
-      const severity = (issue.severity || "info").toLowerCase();
-      const ruleId = issue.rule_id ?? "";
-      const tooltip = issue.rule_text || issue.message || ruleId;
-      const sampleValue = issue.sample_value ?? "";
-      const sampleContent = sampleValue
-        ? `<span class="sample-value">${escapeHtml(sampleValue)}</span><button type="button" class="copy-btn" data-copy="${escapeAttr(sampleValue)}" aria-label="Copy sample value">Copy</button>`
-        : '<span class="muted">—</span>';
-      return `
-        <tr>
-          <td class="sticky-col col-index" data-label="#">${escapeHtml(rowIndex ?? "")}</td>
-          <td class="sticky-col col-item" data-label="Item ID">${escapeHtml(issue.item_id ?? "")}</td>
-          <td data-label="Field">${escapeHtml(issue.field ?? "")}</td>
-          <td data-label="Rule"><span class="rule-id" title="${escapeAttr(tooltip)}">${escapeHtml(ruleId)}</span></td>
-          <td data-label="Severity"><span class="sev-${escapeHtml(severity)}">${escapeHtml(severity)}</span></td>
-          <td data-label="Message">${escapeHtml(issue.message ?? "")}</td>
-          <td data-label="Sample" class="sample-cell">${sampleContent}</td>
-        </tr>
-      `;
-    }).join("");
-    noteTruncate?.classList.toggle("hidden", filtered.length <= limit);
   }
   statusBox.classList.remove("hidden", "error", "success");
   if(type === "success"){
@@ -523,40 +277,18 @@ function applyFilters(){
 function renderResults(data){
   lastResult = data;
   allIssues = Array.isArray(data?.issues) ? data.issues : [];
-  const chipStats = updateChipCounts() || calculateIssueStats();
+  updateChipCounts();
 
   const summary = data?.summary || {};
-  const summaryItemsTotal = typeof summary.items_total === "number" ? summary.items_total : null;
-  const resolvedItemsTotal = Number.isFinite(summaryItemsTotal) ? summaryItemsTotal : (chipStats.itemCount || null);
-
-  if(statTotal) statTotal.textContent = formatCount(resolvedItemsTotal ?? (chipStats.totalIssues ? chipStats.totalIssues : 0));
-  if(statErrors){
-    const errorValue = typeof summary.items_with_errors === "number" ? summary.items_with_errors : chipStats.errorCount;
-    statErrors.textContent = formatCount(errorValue);
-  }
-  if(statWarnings){
-    const warnValue = typeof summary.items_with_warnings === "number" ? summary.items_with_warnings : chipStats.warningCount;
-    statWarnings.textContent = formatCount(warnValue);
-  }
-  if(statScore){
-    const grade = computeScoreGrade({
-      itemsTotal: resolvedItemsTotal,
-      errorCount: chipStats.errorCount,
-      warningCount: chipStats.warningCount,
-      errorItemCount: chipStats.errorItemCount
-    });
-    statScore.textContent = grade.letter;
-    if(grade.letter && grade.letter !== "-"){
-      statScore.dataset.grade = grade.letter;
+  if(statTotal) statTotal.textContent = summary.items_total?.toLocaleString?.() ?? String(summary.items_total ?? "-");
+  if(statErrors) statErrors.textContent = summary.items_with_errors?.toLocaleString?.() ?? String(summary.items_with_errors ?? "-");
+  if(statWarnings) statWarnings.textContent = summary.items_with_warnings?.toLocaleString?.() ?? String(summary.items_with_warnings ?? "-");
+  if(statPass){
+    if(typeof summary.pass_rate === "number" && !Number.isNaN(summary.pass_rate)){
+      const pct = Math.round(summary.pass_rate * 1000) / 10;
+      statPass.textContent = `${pct.toFixed(pct % 1 === 0 ? 0 : 1)}%`;
     }else{
-      delete statScore.dataset.grade;
-    }
-    if(grade.message){
-      statScore.setAttribute("title", grade.message);
-      statScore.setAttribute("aria-label", `Score ${grade.letter}. ${grade.message}`);
-    }else{
-      statScore.removeAttribute("title");
-      statScore.setAttribute("aria-label", `Score ${grade.letter}`);
+      statPass.textContent = "-";
     }
   }
 
@@ -618,20 +350,15 @@ function handleDownloadCsv(){
   URL.revokeObjectURL(url);
 }
 
-const REQUEST_TIMEOUT_MS = 20000;
-
 async function handleValidateClick(event){
   event.preventDefault();
-  renderStatus({ type: "info", title: "Starting validation…", spinner: true });
-  const fileFromInput = fileInput?.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
-  const file = fileFromInput || activeFile;
-
-  if(!file){
+  if(!fileInput || !fileInput.files || fileInput.files.length === 0){
     renderStatus({ type: "error", title: "No file selected", subtitle: "Please add a feed file before validating." });
     updateStepState("ready");
     return;
   }
 
+  const file = fileInput.files[0];
   const formData = new FormData();
   formData.append("file", file);
   if(delimiterInput){
@@ -648,19 +375,7 @@ async function handleValidateClick(event){
   updateStepState("validating");
 
   try{
-    const controller = new AbortController();
-    const to = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    let response;
-    try{
-      response = await fetch("/validate/file", { method: "POST", body: formData, signal: controller.signal });
-    }catch(fetchErr){
-      if(fetchErr && (fetchErr.name === "AbortError" or fetchErr.name === "DOMException")){
-        throw new Error("The request timed out. The validator service may be unreachable.");
-      }
-      throw fetchErr;
-    }finally{
-      clearTimeout(to);
-    }
+    const response = await fetch("/validate/file", { method: "POST", body: formData });
     const raw = await response.text();
     let payload = null;
     try{
@@ -689,7 +404,8 @@ function handleDrop(event){
   event.preventDefault();
   const files = event.dataTransfer?.files;
   if(files && files.length){
-    setActiveFile(files[0], { syncInput: true, sourceFiles: files });
+    fileInput.files = files;
+    updateSelectedFile();
   }
   dropZone?.classList.remove("dragging");
 }
@@ -713,8 +429,9 @@ function initDragAndDrop(){
     }
   });
   dropZone.addEventListener("click", (event) => {
-    if (btnBrowse && btnBrowse.contains(event.target)) return;
-    fileInput?.click();
+    if(event.target !== btnBrowse){
+      fileInput?.click();
+    }
   });
 }
 
@@ -858,8 +575,8 @@ function initSpecFilterKeyboard(){
   });
 }
 
-btnBrowse?.addEventListener("click", (e) => { e.stopPropagation(); fileInput?.click(); });
-fileInput?.addEventListener("change", syncSelectedFileFromInput);
+btnBrowse?.addEventListener("click", () => fileInput?.click());
+fileInput?.addEventListener("change", updateSelectedFile);
 btnJson?.addEventListener("click", handleDownloadJson);
 btnCsv?.addEventListener("click", handleDownloadCsv);
 btnNoIssuesJson?.addEventListener("click", handleDownloadJson);
@@ -871,7 +588,7 @@ initFilters();
 initCopyButtons();
 renderSpecGrid();
 initSpecFilterKeyboard();
-syncSelectedFileFromInput();
+updateSelectedFile();
 setDownloadsEnabled(false);
 updateStepState("ready");
 updateChipCounts();
