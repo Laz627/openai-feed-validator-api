@@ -496,26 +496,4 @@ async def validate_file(
     except Exception as e:
         raise HTTPException(400, f"Validation failed: {e}")
 
-@app.post("/validate/url", response_model=ValidateResponse)
-async def validate_url(
-    feed_url: str = Form(...),
-    delimiter: str = Form(""),
-    encoding: str = Form("utf-8"),
-):
-    try:
-        clean = unquote(feed_url)
-        async with httpx.AsyncClient(timeout=30.0, headers={"Accept":"*/*","User-Agent":"OpenAI-Feed-Validator/1.0"}) as client:
-            r = await client.get(clean)
-            content_type = r.headers.get("content-type","")
-            text_snippet = r.text[:300] if r.text else ""
-            r.raise_for_status()
-            # Proceed even if content-type isn't perfect; rely on parsers
-            return validate_bytes(r.content, delimiter, encoding)
-    except httpx.HTTPStatusError as e:
-        # Include status code and a snippet of the body for debugging
-        body = e.response.text[:300] if e.response is not None else ""
-        raise HTTPException(400, f"Failed to fetch feed URL (status {e.response.status_code if e.response else 'unknown'}): {body}")
-    except Exception as e:
-        raise HTTPException(400, f"Failed to fetch feed URL: {e}")
-
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
