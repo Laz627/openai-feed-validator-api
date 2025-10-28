@@ -20,7 +20,7 @@ class Issue(BaseModel):
     item_id: Optional[str] = None
     field: str
     rule_id: str
-    severity: str  # "error" | "warning" | "info"
+    severity: str  # "error" | "warning" | "info" | "opportunity"
     message: str
     sample_value: Optional[str] = None
     remediation: Optional[List[str]] = None
@@ -29,6 +29,7 @@ class Summary(BaseModel):
     items_total: int = 0
     items_with_errors: int = 0
     items_with_warnings: int = 0
+    items_with_opportunities: int = 0
     pass_rate: float = 0.0
     top_rules: Optional[List[Dict[str, Any]]] = None
 
@@ -170,6 +171,8 @@ def validate_records(records: List[Dict[str, Any]]) -> ValidateResponse:
     total = 0
     error_rows: set[int] = set()
     seen_ids: set[str] = set()
+
+    seen_optional_fields: set[str] = set()
 
     for idx, raw in enumerate(records):
         total += 1
@@ -400,6 +403,11 @@ def validate_records(records: List[Dict[str, Any]]) -> ValidateResponse:
             _push_issue(issues, error_rows, idx, rid, "relationship_type", "OF-299", "warning",
                         "relationship_type must be a documented value.", r["relationship_type"])
 
+        # Track which optional fields were provided at all for opportunity reporting later
+        for opt in RECOMMENDED_FIELDS:
+            if opt in r:
+                seen_optional_fields.add(opt)
+
         # Context-aware recommended warnings (only if PRESENT but empty, and only when applicable)
         def warn_if_present_empty(field: str, rule: str):
             if field in r and (r[field] == "" or r[field] is None):
@@ -429,14 +437,41 @@ def validate_records(records: List[Dict[str, Any]]) -> ValidateResponse:
             if opt in r and (r[opt] == "" or r[opt] is None):
                 warn_if_present_empty(opt, "OF-REC")
 
+    # Flag entirely missing recommended fields as low-severity opportunities
+    def format_field_name(field: str) -> str:
+        return field.replace("_", " ").replace("/", " / ")
+
+    missing_optional = sorted(set(RECOMMENDED_FIELDS) - seen_optional_fields)
+    for field in missing_optional:
+        nice = format_field_name(field)
+        _push_issue(
+            issues,
+            error_rows,
+            row_index=-1,
+            item_id="",
+            field=field,
+            rule_id=f"OF-OPP-{field.upper()}",
+            severity="opportunity",
+            message=f'Consider adding "{nice}" to improve feed coverage and merchandising.',
+            sample=None,
+        )
+
+    # Normalise dataset-level opportunity rows to display without row index
+    for issue in issues:
+        if issue.severity == "opportunity" and issue.row_index == -1:
+            issue.row_index = None
+            issue.item_id = None
+
     errors = sum(1 for it in issues if it.severity == "error")
     warnings = sum(1 for it in issues if it.severity == "warning")
+    opportunities = sum(1 for it in issues if it.severity == "opportunity")
     pass_rate = 0.0 if total == 0 else round((total - len(error_rows)) / total, 4)
 
     return ValidateResponse(
         summary=Summary(items_total=total,
                         items_with_errors=errors,
                         items_with_warnings=warnings,
+                        items_with_opportunities=opportunities,
                         pass_rate=pass_rate),
         issues=issues,
     )

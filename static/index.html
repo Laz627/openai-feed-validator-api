@@ -87,15 +87,12 @@
       <div id="status" class="status hidden" aria-live="polite"></div>
 
       <div id="results" class="results hidden">
-        <div id="summary-bar" class="summary-bar" aria-live="polite">
-          <div class="summary-stat"><span class="stat-label">Items</span><span id="stat-total" class="stat-num">-</span></div>
-          <div class="summary-stat"><span class="stat-label">Errors</span><span id="stat-errors" class="stat-num error">-</span></div>
-          <div class="summary-stat"><span class="stat-label">Warnings</span><span id="stat-warnings" class="stat-num warn">-</span></div>
-          <div class="summary-stat"><span class="stat-label">Pass Rate</span><span id="stat-pass" class="stat-num ok">-</span></div>
+        <div class="results-header" aria-live="polite">
           <div id="summary-truncate" class="summary-chip hidden" role="note">This report includes the first 50&nbsp;000 rows.</div>
-          <div class="summary-spacer"></div>
-          <button id="btn-download-json" class="btn small" disabled>Download JSON</button>
-          <button id="btn-download-csv" class="btn small" disabled>Download CSV</button>
+          <div class="download-actions">
+            <button id="btn-download-json" class="btn small" disabled>Download JSON</button>
+            <button id="btn-download-csv" class="btn small" disabled>Download CSV</button>
+          </div>
         </div>
 
         <div class="results-controls">
@@ -103,6 +100,7 @@
             <button type="button" class="chip active" data-severity="all">All <span class="chip-count" id="count-all">0</span></button>
             <button type="button" class="chip" data-severity="error">Errors <span class="chip-count" id="count-error">0</span></button>
             <button type="button" class="chip" data-severity="warning">Warnings <span class="chip-count" id="count-warning">0</span></button>
+            <button type="button" class="chip" data-severity="opportunity">Opportunities <span class="chip-count" id="count-opportunity">0</span></button>
           </div>
           <div class="filter-search">
             <input type="search" id="filter-search" placeholder="Filter by item, field, or rule" aria-label="Filter results" />
@@ -130,8 +128,8 @@
         <div id="no-issues" class="empty-card hidden" role="status">
           <div class="empty-icon" aria-hidden="true">✅</div>
           <div>
-            <h3>No issues found.</h3>
-            <p>Your feed passed all checks.</p>
+            <h3>No errors or warnings found.</h3>
+            <p>Your feed passed all checks. Review any opportunities for improvement above.</p>
           </div>
           <div class="empty-actions">
             <button id="btn-noissues-json" class="btn ghost" disabled>Download JSON</button>
