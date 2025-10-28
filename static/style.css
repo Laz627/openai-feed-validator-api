@@ -71,3 +71,6 @@ input{background:#0e1016;color:var(--text);border:1px solid var(--border);border
   .field-grid{grid-template-columns:1fr}
   .grid.two{grid-template-columns:1fr}
 }
+
+
+.note { font-size: 0.85rem; color: #666; margin-top: 0.25em; }
