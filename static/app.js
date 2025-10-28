@@ -39,7 +39,6 @@ const dropZone = $("#drop-zone");
 const selectedFileLabel = $("#selected-file");
 const statusBox = $("#status");
 const resultsWrap = $("#results");
-const summaryBar = $("#summary-bar");
 const summaryTruncate = $("#summary-truncate");
 const issuesTable = document.querySelector("#results table.issues");
 const issuesBody = $("#issues-body");
@@ -51,10 +50,6 @@ const btnNoIssuesCsv = $("#btn-noissues-csv");
 const specFilterEl = $("#spec-filter");
 const filterSearchInput = $("#filter-search");
 const severityChips = $$(".chip");
-const statTotal = $("#stat-total");
-const statErrors = $("#stat-errors");
-const statWarnings = $("#stat-warnings");
-const statPass = $("#stat-pass");
 const btnJson = $("#btn-download-json");
 const btnCsv = $("#btn-download-csv");
 const countAll = $("#count-all");
@@ -181,10 +176,6 @@ function resetResults(){
   specFilterEl && (specFilterEl.innerHTML = "");
   noteTruncate?.classList.add("hidden");
   summaryTruncate?.classList.add("hidden");
-  if(statTotal) statTotal.textContent = "-";
-  if(statErrors) statErrors.textContent = "-";
-  if(statWarnings) statWarnings.textContent = "-";
-  if(statPass) statPass.textContent = "-";
   allIssues = [];
   filterSeverity = "all";
   searchTerm = "";
@@ -268,10 +259,6 @@ function applyFilters(){
   if(noteTruncate){
     noteTruncate.classList.add("hidden");
   }
-  if(statTotal) statTotal.textContent = "-";
-  if(statErrors) statErrors.textContent = "-";
-  if(statWarnings) statWarnings.textContent = "-";
-  if(statPass) statPass.textContent = "-";
 }
 
 function renderResults(data){
@@ -280,17 +267,6 @@ function renderResults(data){
   updateChipCounts();
 
   const summary = data?.summary || {};
-  if(statTotal) statTotal.textContent = summary.items_total?.toLocaleString?.() ?? String(summary.items_total ?? "-");
-  if(statErrors) statErrors.textContent = summary.items_with_errors?.toLocaleString?.() ?? String(summary.items_with_errors ?? "-");
-  if(statWarnings) statWarnings.textContent = summary.items_with_warnings?.toLocaleString?.() ?? String(summary.items_with_warnings ?? "-");
-  if(statPass){
-    if(typeof summary.pass_rate === "number" && !Number.isNaN(summary.pass_rate)){
-      const pct = Math.round(summary.pass_rate * 1000) / 10;
-      statPass.textContent = `${pct.toFixed(pct % 1 === 0 ? 0 : 1)}%`;
-    }else{
-      statPass.textContent = "-";
-    }
-  }
 
   const truncated = Boolean(
     summary.truncated ||
