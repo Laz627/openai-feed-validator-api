@@ -618,6 +618,8 @@ function handleDownloadCsv(){
   URL.revokeObjectURL(url);
 }
 
+const REQUEST_TIMEOUT_MS = 20000;
+
 async function handleValidateClick(event){
   event.preventDefault();
   renderStatus({ type: "info", title: "Starting validation…", spinner: true });
@@ -646,7 +648,19 @@ async function handleValidateClick(event){
   updateStepState("validating");
 
   try{
-    const response = await fetch("/validate/file", { method: "POST", body: formData });
+    const controller = new AbortController();
+    const to = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    let response;
+    try{
+      response = await fetch("/validate/file", { method: "POST", body: formData, signal: controller.signal });
+    }catch(fetchErr){
+      if(fetchErr && (fetchErr.name === "AbortError" or fetchErr.name === "DOMException")){
+        throw new Error("The request timed out. The validator service may be unreachable.");
+      }
+      throw fetchErr;
+    }finally{
+      clearTimeout(to);
+    }
     const raw = await response.text();
     let payload = null;
     try{
