@@ -29,16 +29,23 @@ const statWarnings = $("#stat-warnings");
 const statPass = $("#stat-pass");
 const noteTruncate = $("#note-truncate");
 
-function setStatus(text, kind = "info") {
-  statusBox.textContent = text;
+// --- Animated loading banner + progress bar ---
+
+function setStatus(text, kind = "info", loading = false) {
+  statusBox.innerHTML = `
+    <div class="status-inner ${loading ? "loading" : ""}">
+      ${loading ? `<div class="spinner"></div>` : ""}
+      <span>${text}</span>
+      ${loading ? `<div class="bar"><div class="bar-fill"></div></div>` : ""}
+    </div>
+  `;
   statusBox.classList.remove("hidden");
-  statusBox.style.borderColor = kind === "error" ? "#fecaca" : "#e5e7eb";
-  statusBox.style.background = kind === "error" ? "#fef2f2" : "#fff";
+  statusBox.classList.toggle("error", kind === "error");
 }
 
 function clearStatus() {
-  statusBox.textContent = "";
   statusBox.classList.add("hidden");
+  statusBox.innerHTML = "";
 }
 
 function renderResults(data) {
