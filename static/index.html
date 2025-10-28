@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OpenAI Product Feed Validator</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>OpenAI Product Feed Validator</h1>
+      <p>Validate CSV/TSV files or a feed URL against OpenAI’s Product Feed Spec. Get errors, warnings, and downloadable reports.</p>
+    </header>
+
+    <section class="card">
+      <div class="tabs">
+        <button id="tab-file" class="tab active">Upload File (CSV/TSV)</button>
+        <button id="tab-url" class="tab">Validate by URL</button>
+      </div>
+
+      <div id="panel-file" class="panel">
+        <input id="file-input" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" />
+        <div class="row">
+          <label>Delimiter</label>
+          <select id="delimiter">
+            <option value=",">Comma</option>
+            <option value="\t">Tab</option>
+            <option value="|">Pipe</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Encoding</label>
+          <select id="encoding">
+            <option value="utf-8">UTF-8</option>
+            <option value="windows-1252">Windows-1252</option>
+          </select>
+        </div>
+        <button id="btn-validate-file" class="primary">Start Validation</button>
+        <small class="hint">Tip: keep files under ~25–50 MB for best performance. Split very large feeds into chunks.</small>
+      </div>
+
+      <div id="panel-url" class="panel hidden">
+        <input id="feed-url" type="url" placeholder="https://example.com/products.csv" />
+        <div class="row">
+          <label>Delimiter</label>
+          <select id="delimiter-url">
+            <option value="">Auto-detect</option>
+            <option value=",">Comma</option>
+            <option value="\t">Tab</option>
+            <option value="|">Pipe</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Encoding</label>
+          <select id="encoding-url">
+            <option value="utf-8">UTF-8</option>
+            <option value="windows-1252">Windows-1252</option>
+          </select>
+        </div>
+        <button id="btn-validate-url" class="primary">Start Validation</button>
+        <small class="hint">Publicly accessible URLs only.</small>
+      </div>
+    </section>
+
+    <section id="status" class="status hidden"></section>
+
+    <section id="results" class="results hidden">
+      <h2>Results</h2>
+      <div class="stats">
+        <div class="stat"><div class="label">Total Items</div><div class="value" id="stat-total">-</div></div>
+        <div class="stat"><div class="label">Errors (total)</div><div class="value" id="stat-errors">-</div></div>
+        <div class="stat"><div class="label">Warnings (total)</div><div class="value" id="stat-warnings">-</div></div>
+        <div class="stat"><div class="label">Pass Rate</div><div class="value" id="stat-pass">-</div></div>
+      </div>
+
+      <div class="downloads">
+        <button id="btn-download-csv">Download CSV</button>
+        <button id="btn-download-json">Download JSON</button>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Item ID</th>
+              <th>Field</th>
+              <th>Rule</th>
+              <th>Severity</th>
+              <th>Message</th>
+              <th>Sample</th>
+            </tr>
+          </thead>
+          <tbody id="issues-body"></tbody>
+        </table>
+      </div>
+      <small id="note-truncate" class="hint hidden">Showing first 1000 issues…</small>
+    </section>
+
+    <footer class="footer">
+      <a href="https://developers.openai.com/commerce/specs/feed" target="_blank" rel="noopener">OpenAI Product Feed Spec</a>
+    </footer>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
