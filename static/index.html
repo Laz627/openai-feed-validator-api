@@ -7,33 +7,60 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <!-- Topbar -->
   <header class="topbar">
-  <div class="topbar__inner">
-    <div class="topbar__brand">
-      <div class="logo">PF</div>
-      <span>Product Feed Validator</span>
+    <div class="topbar__inner">
+      <div class="topbar__brand">
+        <div class="logo">PF</div>
+        <span>Product Feed Validator</span>
+      </div>
+      <div class="topbar__meta">
+        <a class="byline" href="https://www.linkedin.com/in/brandon-lazovic/" target="_blank" rel="noopener">
+          Built by Brandon Lazovic
+        </a>
+      </div>
     </div>
-    <div class="topbar__meta">
-      <span class="byline">Built by Brandon Lazovic</span>
-      <!-- optional: <button id="toggle-theme" class="ghost">Dark</button> -->
-    </div>
-  </div>
-</header>
-  
+  </header>
+
   <main class="container">
-    <header class="header">
+    <header>
       <h1>OpenAI Product Feed Validator</h1>
-      <p>Validate CSV/TSV files or a feed URL against OpenAI’s Product Feed Spec. Get errors, warnings, and downloadable reports.</p>
+      <p>Validate a JSON, CSV, or TSV feed against common OpenAI product-feed rules. Upload a file or paste a public URL, then download a detailed report.</p>
     </header>
 
     <section class="card">
       <div class="tabs">
-        <button id="tab-file" class="tab active">Upload File (CSV/TSV)</button>
+        <button id="tab-validate" class="tab active">Validate (Upload)</button>
         <button id="tab-url" class="tab">Validate by URL</button>
+        <button id="tab-spec" class="tab">Spec & Requirements</button>
       </div>
 
-      <div id="panel-file" class="panel">
-        <input id="file-input" type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values" />
+      <!-- Tab: Validate (Upload) -->
+      <div id="panel-validate" class="panel">
+        <div class="about">
+          <h3>What this tool does</h3>
+          <p>
+            This validator checks your product feed for required fields (e.g., <code>id</code>, <code>title</code>, <code>price</code>, <code>availability</code>) and common formatting rules (like price format <code>129.99 USD</code> and valid availability values).
+            It supports <strong>JSON</strong> feeds (array of product objects) and <strong>CSV/TSV</strong> with a header row.
+          </p>
+          <h4>How to use</h4>
+          <ol>
+            <li>Choose a file (<code>.json</code>, <code>.csv</code>, or <code>.tsv</code>).</li>
+            <li>Select delimiter (for CSV/TSV) and encoding if needed.</li>
+            <li>Click <em>Start Validation</em> to see errors &amp; warnings, then download CSV/JSON reports.</li>
+          </ol>
+          <h4>Why OpenAI product feeds?</h4>
+          <p>
+            OpenAI’s commerce ecosystem uses structured product data to power AI-assisted discovery, comparison, and purchase flows.
+            While it overlaps with Google Merchant Center feeds, there are differences in <em>field names</em>, <em>accepted values</em>, and <em>format expectations</em>.
+            This tool focuses on OpenAI-aligned rules (e.g., availability enums and price format) and will evolve with the spec.
+          </p>
+          <small>Note: This is an MVP validator. Always cross-reference the latest spec.</small>
+        </div>
+
+        <input id="file-input" type="file"
+               accept=".json,application/json,.csv,text/csv,.tsv,text/tab-separated-values" />
+
         <div class="row">
           <label>Delimiter</label>
           <select id="delimiter">
@@ -50,11 +77,12 @@
           </select>
         </div>
         <button id="btn-validate-file" class="primary">Start Validation</button>
-        <small class="hint">Tip: keep files under ~25–50 MB for best performance. Split very large feeds into chunks.</small>
+        <small class="hint">Tip: For large feeds, split into chunks. MVP hard cap: <strong>50,000 rows</strong> per run.</small>
       </div>
 
+      <!-- Tab: Validate by URL -->
       <div id="panel-url" class="panel hidden">
-        <input id="feed-url" type="url" placeholder="https://example.com/products.csv" />
+        <input id="feed-url" type="url" placeholder="https://raw.githubusercontent.com/user/repo/branch/feed.json (or .csv/.tsv)" />
         <div class="row">
           <label>Delimiter</label>
           <select id="delimiter-url">
@@ -72,7 +100,25 @@
           </select>
         </div>
         <button id="btn-validate-url" class="primary">Start Validation</button>
-        <small class="hint">Publicly accessible URLs only.</small>
+        <small class="hint">Use a public, direct file URL. For GitHub/Gist, click <em>Raw</em> and paste that link.</small>
+      </div>
+
+      <!-- Tab: Spec & Requirements -->
+      <div id="panel-spec" class="panel hidden">
+        <div class="spec-grid">
+          <div>
+            <h3>Required Fields</h3>
+            <ul id="req-list"></ul>
+          </div>
+          <div>
+            <h3>Recommended Fields</h3>
+            <ul id="rec-list"></ul>
+          </div>
+        </div>
+        <p class="hint">
+          Based on the current OpenAI product feed patterns. Always confirm against the latest spec:
+          <a href="https://developers.openai.com/commerce/specs/feed" target="_blank" rel="noopener">OpenAI Product Feed Spec</a>.
+        </p>
       </div>
     </section>
 
@@ -111,7 +157,7 @@
       <small id="note-truncate" class="hint hidden">Showing first 1000 issues…</small>
     </section>
 
-    <footer class="footer">
+    <footer>
       <a href="https://developers.openai.com/commerce/specs/feed" target="_blank" rel="noopener">OpenAI Product Feed Spec</a>
     </footer>
   </main>
