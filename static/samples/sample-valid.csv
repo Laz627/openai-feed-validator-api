@@ -1,0 +1,2 @@
+enable_search,enable_checkout,id,title,description,link,product_category,brand,material,weight,image_link,price,availability,inventory_quantity,seller_name,seller_url,return_policy,return_window
+true,false,SKU-CSV-001,Travel Waist Pack,"Hands-free waist pack for quick access.","https://example.com/product/SKU-CSV-001","Luggage & Bags > Fanny Packs",BlackBriar,Nylon,"0.7 lb","https://example.com/images/sku-csv-001.jpg","81.07 USD",in_stock,50,"BlackBriar USA","https://example.com/store","https://example.com/returns",30
